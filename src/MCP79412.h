@@ -17,6 +17,8 @@ Distributed as-is; no warranty is given.
 #define MCP79412_h
 
 #include <Particle.h>
+#include <time.h>
+#include <stdlib.h>
 // #include "Arduino.h"
 // #include <cstdint>
 // #ifdef ARDUINO 
@@ -120,6 +122,7 @@ class MCP79412
 		bool readBit(int Reg, uint8_t Pos);
 		int setBit(int Reg, uint8_t Pos);
 		int clearBit(int Reg, uint8_t Pos);
+		time_t timegm(struct tm *tm); //Portable implementation
 		const int ADR = 0x6F; //Address of MCP7940 (non-variable)
 		int Time_Date[6]; //Store date time values of integers 
 

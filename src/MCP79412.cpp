@@ -266,7 +266,21 @@ String MCP79412::getTime(Format mode)
  */
 unsigned long MCP79412::getTimeUnix()
 {
-	return 0; //Return dummy value
+	Timestamp t = getRawTime(); //Get updated time
+	struct tm timeinfo = {0}; //Create struct in C++ time land
+	// time_t rawtime;
+	// time ( &rawtime );
+	// timeinfo = *localtime ( &rawtime );
+	//Copy the time to C++ time land
+	timeinfo.tm_year = t.year - 1900; //Years since 1900
+	timeinfo.tm_mon = t.month - 1; //Months since january
+	timeinfo.tm_mday = t.mday;
+	timeinfo.tm_hour = t.hour;
+	timeinfo.tm_min = t.min;
+	timeinfo.tm_sec = t.sec;
+	time_t rawTime = timegm(&timeinfo); //Convert struct to unix time
+	return rawTime;
+	// return 0; //Return dummy value
 }
 
 /**
@@ -749,4 +763,21 @@ int MCP79412::throwError(uint32_t error)
 	errors[(numErrors++) % MAX_NUM_ERRORS] = error; //Write error to the specified location in the error array
 	// if(numErrors > MAX_NUM_ERRORS) errorOverwrite = true; //Set flag if looping over previous errors 
 	return numErrors;
+}
+
+time_t MCP79412::timegm(struct tm *tm)
+{
+    time_t ret;
+    char *tz;
+
+   tz = getenv("TZ");
+    setenv("TZ", "", 1);
+    tzset();
+    ret = mktime(tm);
+    if (tz)
+        setenv("TZ", tz, 1);
+    else
+        unsetenv("TZ");
+    tzset();
+    return ret;
 }
