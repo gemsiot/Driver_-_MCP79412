@@ -62,7 +62,8 @@ class MCP79412
 {
     const uint32_t NONREAL_TIME = 0x500101F5; ///<RTC has been set to non-real time (day or month or year read as zero)
     const uint32_t ANCIENT_TIME = 0x500201F5; ///<RTC has been set to time before start of 2000
-    constexpr static int MAX_NUM_ERRORS = 10; ///<Maximum number of errors to log before overwriting previous errors in buffer
+    const uint32_t RTC_EEPROM_READ_FAIL = 0x100800F5; ///<EEPROM failed to read
+	constexpr static int MAX_NUM_ERRORS = 10; ///<Maximum number of errors to log before overwriting previous errors in buffer
 	public:
 		enum class Format: int
 		{
@@ -106,6 +107,8 @@ class MCP79412
 		int enableAlarm(bool State = true, bool AlarmVal = 0); //Default to ALM0, enable
 		int clearAlarm(bool AlarmVal = 0); //Default to ALM0
 		bool readAlarm(bool AlarmVal = 0); //Default to ALM0
+		String getUUIDString();
+		uint64_t getUUID();
 
 		uint8_t readByte(int Reg); //DEBUG! Make private
 
@@ -123,7 +126,8 @@ class MCP79412
 		int setBit(int Reg, uint8_t Pos);
 		int clearBit(int Reg, uint8_t Pos);
 		time_t timegm(struct tm *tm); //Portable implementation
-		const int ADR = 0x6F; //Address of MCP7940 (non-variable)
+		const int ADR = 0x6F; //Address of MCP79412 (non-variable)
+		const int ADR_EEPROM = 0x57; //Address of the embedded EEPROM 
 		int Time_Date[6]; //Store date time values of integers 
 
 		const uint8_t Control = 0x07;

@@ -636,6 +636,60 @@ bool MCP79412::readAlarm(bool AlarmVal) {  //Clear registers to stop alarm, must
 }
 
 /**
+ * Read the UUID from the memory on the RTC and report back as string
+ *
+ * @return String, a '-' seperated hex encoded UUID
+ */
+String MCP79412::getUUIDString() {
+	uint8_t val = 0; 
+	String uuid = "";
+	Wire.beginTransmission(ADR_EEPROM); //EEPROM address
+	Wire.write(0xF0); //Begining of EUI-64 data
+	int error = Wire.endTransmission();
+	if(error == 0) { //Only attempt to read in if there are no errors
+		Wire.requestFrom(ADR_EEPROM, 8); //EEPROM address
+		for(int i = 0; i < 8; i++) {
+			val = Wire.read();
+			uuid = uuid + String(val); //Concatonate into full UUID
+			if(i < 7) uuid = uuid + '-'; //Print formatting chracter, don't print on last pass
+		}
+		return uuid; //Only return UUID if read was good
+	}
+	else {
+		throwError(RTC_EEPROM_READ_FAIL);
+		return "null"; //Otherwise return null state
+	}
+}
+
+/**
+ * Read the UUID from the memory on the RTC and report back as number
+ *
+ * @return uint64_t, the 64 bit value of the UUID
+ */
+uint64_t MCP79412::getUUID() {
+	uint8_t val = 0; 
+	uint64_t uuid = 0; 
+	Wire.beginTransmission(ADR_EEPROM); //EEPROM address
+	Wire.write(0xF0); //Begining of EUI-64 data
+	int error = Wire.endTransmission();
+	if(error == 0) {
+		Wire.requestFrom(ADR, 8); //EEPROM address
+		for(int i = 0; i < 8; i++) {
+			val = Wire.read();
+			uuid = uuid | (val << (8 - i)); //Concatonate into full UUID
+			// Serial.print(Val, HEX); //Print each hex byte from left to right
+			if(i < 7) Serial.print('-'); //Print formatting chracter, don't print on last pass
+		}
+		return uuid;
+	}
+	else {
+		throwError(RTC_EEPROM_READ_FAIL);
+		return 0; //Otherwise return null state
+	}
+	// Serial.print("\n");
+}
+
+/**
  * Starts the crystal oscilator connected to the device (required to keep time)
  *
  * @return bool, state of oscilator at end of startup (1 = running, 0 = not running, error)
