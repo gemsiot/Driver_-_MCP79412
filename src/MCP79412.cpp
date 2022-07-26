@@ -69,6 +69,7 @@ int MCP79412::begin(bool UseExtOsc)
 		return OscError; //Return oscilator status
 	}
 	else {
+		clearBit(0, 7); //Clear bit 7 of reg 0 (turn off ST bit)
 		int Error = setBit(Control, 3); //Turn on external oscilator input
 		if(Error == 0) return 1; //Return pass if I2C comunication is good, FIX??
 		else return 0; //Return fail if any other I2C error code 
@@ -100,6 +101,7 @@ int MCP79412::begin(bool UseExtOsc)
  */
 int MCP79412::setTime(int Year, int Month, int Day, int DoW, int Hour, int Min, int Sec)
 {
+	bool stVal = readBit(0x00, 7); //Read the ST value from the seconds register to check for the current value
 	int Error = 0; //Default to no error 
 	if(Year > 999) {
 		Year = Year - 2000; //FIX! Add compnesation for centry 
@@ -122,7 +124,7 @@ int MCP79412::setTime(int Year, int Month, int Day, int DoW, int Hour, int Min, 
 					b=B00000001;
 			}	
 			TimeDate[i]= a+(b<<4);
-			if(i == 0) TimeDate[i] = TimeDate[i] | 0x80; //Set ST bit to keep oscilator running 
+			if(i == 0 && stVal) TimeDate[i] = TimeDate[i] | 0x80; //Set ST bit to keep oscilator running if previously set
 
 			//FIX! Test for leap year and set LPYR bit
 		}
