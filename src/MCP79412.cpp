@@ -117,12 +117,12 @@ int MCP79412::setTime(int Year, int Month, int Day, int DoW, int Hour, int Min, 
 		else { //Otherwise write method for other regs
 			int b = TimeDate[i]/10;
 			int a = TimeDate[i]-b*10;
-			if(i == 2){
-				if (b==2)
-					b=B00000010;
-				else if (b==1)
-					b=B00000001;
-			}	
+			// if(i == 2){
+			// 	if (b==2)
+			// 		b=B00000010;
+			// 	else if (b==1)
+			// 		b=B00000001;
+			// }	
 			TimeDate[i]= a+(b<<4);
 			if(i == 0 && stVal) TimeDate[i] = TimeDate[i] | 0x80; //Set ST bit to keep oscilator running if previously set
 
