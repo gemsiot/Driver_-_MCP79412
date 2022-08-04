@@ -62,6 +62,7 @@ int MCP79412::begin(bool UseExtOsc)
 	// Wire.write(0x0E); //Write values to Control reg
 	// Wire.write(0x24); //Start oscilator, turn off BBSQW, Turn off alarms, turn on convert
 	// return Wire.endTransmission(); //return result of begin, reading is optional
+	if(readBit(Regs::WeekDay, 3) == 0) throwError(RTC_POWER_LOSS); //If this bit is set back to 0, all power to the RTC must have been lost
 	setBit(Regs::WeekDay, 3); //Turn backup battery enable
 
 	if(!UseExtOsc) {

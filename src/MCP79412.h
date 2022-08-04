@@ -63,6 +63,7 @@ class MCP79412
     const uint32_t NONREAL_TIME = 0x500101F5; ///<RTC has been set to non-real time (day or month or year read as zero)
     const uint32_t ANCIENT_TIME = 0x500201F5; ///<RTC has been set to time before start of 2000
     const uint32_t RTC_EEPROM_READ_FAIL = 0x100800F5; ///<EEPROM failed to read
+	const uint32_t RTC_POWER_LOSS = 0x54B200F5; ///<When the bat en bit is set back to 0
 	constexpr static int MAX_NUM_ERRORS = 10; ///<Maximum number of errors to log before overwriting previous errors in buffer
 	public:
 		enum class Format: int
