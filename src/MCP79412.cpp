@@ -653,7 +653,7 @@ String MCP79412::getUUIDString() {
 		Wire.requestFrom(ADR_EEPROM, 8); //EEPROM address
 		for(int i = 0; i < 8; i++) {
 			val = Wire.read();
-			uuid = uuid + String(val); //Concatonate into full UUID
+			uuid = uuid + String(val, HEX); //Concatonate into full UUID
 			if(i < 7) uuid = uuid + '-'; //Print formatting chracter, don't print on last pass
 		}
 		return uuid; //Only return UUID if read was good
