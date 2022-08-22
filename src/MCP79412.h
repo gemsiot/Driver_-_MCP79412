@@ -97,7 +97,7 @@ class MCP79412
 		int setTime(int Year, int Month, int Day, int Hour, int Min, int Sec);
 		Timestamp getRawTime();
 		String getTime(Format mode = Format::Scientific); //Default to scientifc
-		unsigned long getTimeUnix(); 
+		time_t getTimeUnix(); 
 		// float GetTemp();
 		int setMode(Mode Val); 
 		int getValue(int n);
@@ -121,12 +121,13 @@ class MCP79412
 
 	private:
 		bool startOsc();
-		
+		struct tm timeinfo = {0}; //Create struct in C++ time land
 		int writeByte(int Reg, uint8_t Val);
 		bool readBit(int Reg, uint8_t Pos);
 		int setBit(int Reg, uint8_t Pos);
 		int clearBit(int Reg, uint8_t Pos);
 		time_t timegm(struct tm *tm); //Portable implementation
+		time_t cstToUnix(int year, int month, int day, int hour, int minute, int second);
 		const int ADR = 0x6F; //Address of MCP79412 (non-variable)
 		const int ADR_EEPROM = 0x57; //Address of the embedded EEPROM 
 		int Time_Date[6]; //Store date time values of integers 
