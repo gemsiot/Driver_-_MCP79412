@@ -58,6 +58,7 @@ int MCP79412::begin(bool UseExtOsc)
         throwError(NONREAL_TIME); 
         setTime(2001, 1, 1, 0, 0, 0); //If the current time is less than 00:00:00 2000/1/1 (if month/day is set to zero in correctly), set time to default time so alarms work 
     }
+	
 	// Wire.beginTransmission(ADR);
 	// Wire.write(0x0E); //Write values to Control reg
 	// Wire.write(0x24); //Start oscilator, turn off BBSQW, Turn off alarms, turn on convert
@@ -65,6 +66,7 @@ int MCP79412::begin(bool UseExtOsc)
 	if(readBit(Regs::WeekDay, 3) == 0) throwError(RTC_POWER_LOSS); //If this bit is set back to 0, all power to the RTC must have been lost
 	setBit(Regs::WeekDay, 3); //Turn backup battery enable
 
+	writeByte(Control, 0x00); //Clear control reg //DEBUG! Prevent issue where square wave is erroniously enabled on multi-purpose pin
 	if(!UseExtOsc) {
 		bool OscError = startOsc();
 		return OscError; //Return oscilator status
