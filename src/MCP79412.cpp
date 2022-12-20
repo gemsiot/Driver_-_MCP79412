@@ -677,6 +677,7 @@ int MCP79412::clearAlarm(bool AlarmVal) {  //Clear registers to stop alarm, must
  */
 int MCP79412::enableAlarm(bool State, bool AlarmVal) {  //Clear registers to stop alarm, must call SetAlarm again to get it to turn on again
 	uint8_t RegOffset = BlockOffset; 
+	clearBit(Control, 6); //If an alarm is in use, disable square wave output //DEBUG! 
 	if(AlarmVal == 1) RegOffset = AlarmOffset + BlockOffset; //Set offset if using ALM1
 	if(State) return setBit(Control, 4 + AlarmVal); //Set enable bit of desired alarm
 	else if(!State) return clearBit(Control, 4 + AlarmVal); //Clear enable bit of desired alarm
