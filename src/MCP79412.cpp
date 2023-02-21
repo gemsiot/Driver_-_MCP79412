@@ -67,6 +67,7 @@ int MCP79412::begin(bool UseExtOsc)
 	setBit(Regs::WeekDay, 3); //Turn backup battery enable
 
 	writeByte(Control, 0x00); //Clear control reg //DEBUG! Prevent issue where square wave is erroniously enabled on multi-purpose pin
+	writeByte(Control + 1, 0x00); //Clear trim register //DEBUG! Prevent where trim value is erroniously set
 	if(!UseExtOsc) {
 		bool OscError = startOsc();
 		return OscError; //Return oscilator status
