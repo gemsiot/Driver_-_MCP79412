@@ -11,6 +11,8 @@ over long periods of time, and waking up a logger device when required to take m
 -Henery Bemis
 
 Distributed as-is; no warranty is given.
+
+© 2023 Regents of the University of Minnesota. All rights reserved.
 ******************************************************************************/
 
 #ifndef MCP79412_h
