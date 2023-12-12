@@ -60,6 +60,7 @@ int MCP79412::begin(bool UseExtOsc)
         throwError(NONREAL_TIME); 
         setTime(2001, 1, 1, 0, 0, 0); //If the current time is less than 00:00:00 2000/1/1 (if month/day is set to zero in correctly), set time to default time so alarms work 
     }
+	
 	// Wire.beginTransmission(ADR);
 	// Wire.write(0x0E); //Write values to Control reg
 	// Wire.write(0x24); //Start oscilator, turn off BBSQW, Turn off alarms, turn on convert
@@ -67,6 +68,8 @@ int MCP79412::begin(bool UseExtOsc)
 	if(readBit(Regs::WeekDay, 3) == 0) throwError(RTC_POWER_LOSS); //If this bit is set back to 0, all power to the RTC must have been lost
 	setBit(Regs::WeekDay, 3); //Turn backup battery enable
 
+	writeByte(Control, 0x00); //Clear control reg //DEBUG! Prevent issue where square wave is erroniously enabled on multi-purpose pin
+	writeByte(Control + 1, 0x00); //Clear trim register //DEBUG! Prevent where trim value is erroniously set
 	if(!UseExtOsc) {
 		bool OscError = startOsc();
 		return OscError; //Return oscilator status
@@ -172,6 +175,7 @@ MCP79412::Timestamp MCP79412::getRawTime() {
 	Wire.write(0x00); //Read values starting at reg 0x00
 	Wire.endTransmission();
 	Wire.requestFrom(ADR, 7);	//WAIT FOR DATA BACK FIX!!
+	Timestamp ts;
 
 	for(int i=0; i<=6;i++){
 		int n = Wire.read(); //Read value of reg
@@ -181,10 +185,12 @@ MCP79412::Timestamp MCP79412::getRawTime() {
 		int high = (n >> 4) & B1111;
 		switch (i) {
 		case 0: // seconds
+			// break;
 		case 1: // minutes
 			a += (high & B0111) * 10;
 			break;
 		case 2: // hour (24-hour time)
+			// break;
 		case 4: // day of month
 			a += (high & B0011) * 10;
 			break;
@@ -201,15 +207,24 @@ MCP79412::Timestamp MCP79412::getRawTime() {
 		TimeDate[i] = a;
 	}
 
-	return {
-		.year  = (uint16_t)(TimeDate[6] + 2000),
-		.month = (uint8_t)TimeDate[5],
-		.mday  = (uint8_t)TimeDate[4],
-		.wday  = (uint8_t)TimeDate[3],
-		.hour  = (uint8_t)TimeDate[2],
-		.min   = (uint8_t)TimeDate[1],
-		.sec   = (uint8_t)TimeDate[0]
-	};
+	ts.year = (uint16_t)(TimeDate[6] + 2000);
+	ts.month = (uint8_t)TimeDate[5];
+	ts.mday = (uint8_t)TimeDate[4];
+	ts.wday = (uint8_t)TimeDate[3];
+	ts.hour = (uint8_t)TimeDate[2];
+	ts.min = (uint8_t)TimeDate[1];
+	ts.sec = (uint8_t)TimeDate[0];
+
+	return ts;
+	// return {
+	// 	.year  = (uint16_t)(TimeDate[6] + 2000),
+	// 	.month = (uint8_t)TimeDate[5],
+	// 	.mday  = (uint8_t)TimeDate[4],
+	// 	.wday  = (uint8_t)TimeDate[3],
+	// 	.hour  = (uint8_t)TimeDate[2],
+	// 	.min   = (uint8_t)TimeDate[1],
+	// 	.sec   = (uint8_t)TimeDate[0]
+	// };
 }
 
 /**
@@ -266,25 +281,72 @@ String MCP79412::getTime(Format mode)
 /**
  * Return current time of the device, Unix time
  *
- * @param Mode, used to set which value is returned 
  * @return unsigned long of current Unix timestamp
  */
-unsigned long MCP79412::getTimeUnix()
+time_t MCP79412::getTimeUnix()
 {
-	Timestamp t = getRawTime(); //Get updated time
-	struct tm timeinfo = {0}; //Create struct in C++ time land
+	// Timestamp t = getRawTime(); //Get updated time
+	// struct tm timeinfo = {0}; //Create struct in C++ time land
 	// time_t rawtime;
 	// time ( &rawtime );
 	// timeinfo = *localtime ( &rawtime );
 	//Copy the time to C++ time land
-	timeinfo.tm_year = t.year - 1900; //Years since 1900
-	timeinfo.tm_mon = t.month - 1; //Months since january
-	timeinfo.tm_mday = t.mday;
-	timeinfo.tm_hour = t.hour;
-	timeinfo.tm_min = t.min;
-	timeinfo.tm_sec = t.sec;
-	time_t rawTime = timegm(&timeinfo); //Convert struct to unix time
-	return rawTime;
+
+	int TimeDate [7] = {0,0,0,0,0,0,0}; //second,minute,hour,weekday,monthday,month,year
+	Wire.beginTransmission(ADR); //Ask 1 byte of data
+	Wire.write(0x00); //Read values starting at reg 0x00
+	Wire.endTransmission();
+	Wire.requestFrom(ADR, 7);	//WAIT FOR DATA BACK FIX!!
+	// Timestamp ts;
+
+	for(int i=0; i<=6;i++){
+		int n = Wire.read(); //Read value of reg
+
+		//Process results
+		int a=n & B00001111;
+		int high = (n >> 4) & B1111;
+		switch (i) {
+		case 0: // seconds
+			// break;
+		case 1: // minutes
+			a += (high & B0111) * 10;
+			break;
+		case 2: // hour (24-hour time)
+			// break;
+		case 4: // day of month
+			a += (high & B0011) * 10;
+			break;
+		case 3: // day of week
+			a &= B0111;
+			break;
+		case 5: // month of year
+			a += (high & B0001) * 10;
+			break;
+		default: // year
+			a += high * 10;
+			break;
+		}
+		TimeDate[i] = a;
+	}
+	// timeinfo.tm_year = TimeDate[6] + 100; //Years since 1900, not 2000
+	// timeinfo.tm_mon = TimeDate[5] - 1; //Months since january
+	// timeinfo.tm_mday = TimeDate[4];
+	// timeinfo.tm_hour = TimeDate[2];
+	// timeinfo.tm_min = TimeDate[1];
+	// timeinfo.tm_sec = TimeDate[0];
+
+	// timeinfo.tm_year = t.year - 1900; //Years since 1900
+	// timeinfo.tm_mon = t.month - 1; //Months since january
+	// timeinfo.tm_mday = t.mday;
+	// timeinfo.tm_hour = t.hour;
+	// timeinfo.tm_min = t.min;
+	// timeinfo.tm_sec = t.sec;
+	// t.~Timestamp(); //Call destructor
+
+	// time_t rawTime = timegm(&timeinfo); //Convert struct to unix time
+	// return rawTime;
+	// return 0xDEADBEEF; //DEBUG!
+	return cstToUnix(TimeDate[6] + 2000, TimeDate[5], TimeDate[4], TimeDate[2], TimeDate[1], TimeDate[0]);
 	// return 0; //Return dummy value
 }
 
@@ -618,6 +680,7 @@ int MCP79412::clearAlarm(bool AlarmVal) {  //Clear registers to stop alarm, must
  */
 int MCP79412::enableAlarm(bool State, bool AlarmVal) {  //Clear registers to stop alarm, must call SetAlarm again to get it to turn on again
 	uint8_t RegOffset = BlockOffset; 
+	clearBit(Control, 6); //If an alarm is in use, disable square wave output //DEBUG! 
 	if(AlarmVal == 1) RegOffset = AlarmOffset + BlockOffset; //Set offset if using ALM1
 	if(State) return setBit(Control, 4 + AlarmVal); //Set enable bit of desired alarm
 	else if(!State) return clearBit(Control, 4 + AlarmVal); //Clear enable bit of desired alarm
@@ -839,4 +902,11 @@ time_t MCP79412::timegm(struct tm *tm)
         unsetenv("TZ");
     tzset();
     return ret;
+}
+
+time_t MCP79412::cstToUnix(int year, int month, int day, int hour, int minute, int second)
+{
+    unsigned long unixDate = day - 32075 + 1461*(year + 4800 + (month - 14)/12)/4 + 367*(month - 2 - (month - 14)/12*12)/12 - 3*((year + 4900 + (month - 14)/12)/100)/4 - 2440588; //Stolen from Communications of the ACM in October 1968 (Volume 11, Number 10), Henry F. Fliegel and Thomas C. Van Flandern - offset from Julian Date. Why mess with success? 
+    return unixDate*86400 + hour*3600 + minute*60 + second; //Convert unixDate to seconds, sum partial seconds from the current day
+
 }
